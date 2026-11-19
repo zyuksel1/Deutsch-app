@@ -1,5 +1,5 @@
 "use strict";
-// Deutsch-App v0.9: yönetici modu yalnız localhost, ilerlemeyi sıfırla, güncelleme bildirimi. v0.8: çevrimdışı (sw.js, manifest), 💾 ilerleme yedeği (backup.js). v0.7: 📒 ders notları (notes.js). v0.6: karışık Bugünkü ders (bitmemiş tüm kategoriler + eski tekrar), kategoriler paralel açık.
+// Deutsch-App v0.10: önceden kaydedilmiş Almanca ses dosyaları (audio/, Deutsch-App-tools/make_audio.py). v0.9: yönetici modu yalnız localhost, ilerlemeyi sıfırla, güncelleme bildirimi. v0.8: çevrimdışı (sw.js, manifest), 💾 ilerleme yedeği (backup.js). v0.7: 📒 ders notları (notes.js). v0.6: karışık Bugünkü ders (bitmemiş tüm kategoriler + eski tekrar), kategoriler paralel açık.
 // v0.5: 🎵 şarkılarla öğrenme (lieder.js + content/lieder.js).
 // v0.4: Pas butonu (emin/tahmin yok), yazim hatasina kismi puan, kelime hedefi ve ustalik,
 // metin bazli okuma/dinleme ilerlemesi, testte ayri metinler, ses durdurma, yonetici modu, 💼 is Almancasi.
@@ -78,17 +78,31 @@ function loadVoices() {
   const el = document.getElementById("voiceState"); if (el) el.innerHTML = voiceStateHtml();
 }
 function voiceStateHtml() {
-  return deVoice ? `🔊 Ses: <b>${h(deVoice.name)}</b>`
-    : `🔇 <b>Almanca ses bulunamadı, ses kapalı.</b> (Türkçe sesle yanlış okumasın diye.) <a href="#" data-a="voice">Nasıl açılır?</a>`;
+  return `🔊 Ses: <b>kayıtlı Almanca ses</b> (her cihazda aynı, internetsiz çalışır)`;
 }
-const stopAudio = () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); if (window.liedStop) window.liedStop(); };
+// v0.10 Önceden kaydedilmiş ses dosyaları (audio/index.js). Dosyası olmayan metinde cihazın Almanca sesi denenir.
+// iPhone: sessiz mod düğmesi açıkken de ses (Safari 17+); eski sürümlerde etkisiz
+try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+const AU = new Audio(); AU.preload = "auto"; let auQueue = [], auRate = 1;
+const audioFile = (t, v) => { const m = window.AUDIO && window.AUDIO[v || "a"]; const n = m && m[String(t).trim()]; return n ? "audio/" + n : null; };
+function auPlay(src, rate) { AU.src = src; AU.playbackRate = rate || 1; try { AU.preservesPitch = true; } catch (e) {} const p = AU.play(); if (p && p.catch) p.catch(() => {}); }
+AU.addEventListener("ended", () => { const nx = auQueue.shift(); if (nx) auPlay(nx, auRate); });
+const stopAudio = () => { auQueue = []; try { AU.pause(); } catch (e) {} if ("speechSynthesis" in window) speechSynthesis.cancel(); if (window.liedStop) window.liedStop(); };
 function utter(text, voice, rate) { const u = new SpeechSynthesisUtterance(text); u.voice = voice; u.lang = voice.lang; u.rate = rate || 0.9; return u; }
-function speak(text, auto) { if (!deVoice) return auto ? null : voiceScreen(); stopAudio(); speechSynthesis.speak(utter(text, deVoice)); }
+function speak(text, auto) {
+  const f = audioFile(text);
+  if (f) { stopAudio(); return auPlay(f, 1); }
+  if (!deVoice) return auto ? null : voiceScreen();
+  stopAudio(); speechSynthesis.speak(utter(text, deVoice));
+}
 function playScript(lines, rate) {
-  if (!deVoice) return voiceScreen();
-  const second = deVoices.find(v => v !== deVoice) || deVoice, who = {}; let k = 0;
+  const who = {}; let k = 0;
+  const files = lines.map(([sp, line]) => { if (!(sp in who)) who[sp] = k++ % 2 ? "b" : "a"; return audioFile(line, who[sp]) || audioFile(line, "a"); });
   stopAudio();
-  for (const [sp, line] of lines) { if (!(sp in who)) who[sp] = k++ % 2 ? second : deVoice; speechSynthesis.speak(utter(line, who[sp], rate)); }
+  if (files.every(Boolean)) { auRate = (rate || 0.85) / 0.85; auQueue = files.slice(1); return auPlay(files[0], auRate); }
+  if (!deVoice) return voiceScreen();
+  const second = deVoices.find(v => v !== deVoice) || deVoice, tv = {}; k = 0;
+  for (const [sp, line] of lines) { if (!(sp in tv)) tv[sp] = k++ % 2 ? second : deVoice; speechSynthesis.speak(utter(line, tv[sp], rate)); }
 }
 const sayBtn = t => `<button class="sound" data-a="say" data-t="${h(t)}" aria-label="Dinle">🔊</button>`;
 if ("speechSynthesis" in window) { speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); setTimeout(loadVoices, 800); }
@@ -645,14 +659,15 @@ function voiceScreen() {
   stopAudio(); run = null;
   const list = deVoices.map(v => `<option ${v === deVoice ? "selected" : ""}>${h(v.name)}</option>`).join("");
   $app.innerHTML = `<div class="card"><h2>Ses ayarı</h2>
-    ${deVoices.length ? `<p>Almanca ses seç (en doğal olan üstte):</p><select id="vsel">${list}</select>
-      <div class="row" style="margin-top:10px"><button class="primary" data-a="vtest">Dene: "Ich sehe den Hund."</button></div>`
-      : `<div class="bubble"><b>Bu tarayıcıda Almanca ses yok.</b> Ses, Türkçe telaffuzla yanlış öğretmesin diye kapalı.</div>`}
-    <h3>En iyi ses için</h3>
-    <ul><li><b>Bilgisayar:</b> Uygulamayı <b>Microsoft Edge</b> ile aç, internet açık olsun ("Natural" Almanca sesler).</li>
-    <li>İnternetsiz ses için: Windows Ayarlar → Saat ve dil → Konuşma → Ses ekle → Deutsch (Deutschland).</li>
-    <li><b>Telefon:</b> Android'de Google TTS'te Almanca ses verisini indir; iPhone'da Ayarlar → Erişilebilirlik → Seslendirilen İçerik → Sesler → Almanca.</li></ul>
-    <button class="ghost" data-a="home">← Geri</button></div>`;
+    <p>Uygulamadaki tüm Almanca kelime, cümle ve diyaloglar <b>önceden kaydedilmiş ses dosyası</b> olarak gelir: her telefonda ve bilgisayarda aynı ses, internetsiz de çalışır. Cihazın ses ayarı gerekmez.</p>
+    <div class="row"><button class="primary" data-a="say" data-t="Ich sehe den Hund.">🔊 Dene: "Ich sehe den Hund."</button></div>
+    <h3>Ses gelmiyorsa</h3>
+    <ul><li><b>iPhone:</b> ses düğmesiyle medya sesini aç. Şarkı melodisi gelmiyorsa yandaki <b>sessiz mod düğmesini</b> kapat (eski iOS sürümlerinde gerekir).</li>
+    <li>İlk kez internet açıkken uygulamayı bir süre açık tut; sesler cihaza iner, sonra internetsiz çalışır.</li></ul>
+    <h3>Yedek ses (yalnız kendi şarkının sözleri gibi kayıtlı olmayan metinler için)</h3>
+    ${deVoices.length ? `<select id="vsel">${list}</select><div class="row" style="margin-top:10px"><button class="ghost" data-a="vtest">Yedek sesi dene</button></div>`
+      : `<p class="muted">Bu cihazda Almanca yedek ses yok; kayıtlı olmayan metinler sessiz kalır (Türkçe sesle yanlış okumasın diye).</p>`}
+    <button class="ghost" data-a="home" style="margin-top:12px">← Geri</button></div>`;
 }
 function level() {
   stopAudio(); run = null;
@@ -686,7 +701,7 @@ const actions = {
   play: () => { const ex = run.items[run.i], key = ex.passage.list + ex.passage.u + ":" + ex.passage.pi; if (playsLeft(ex) <= 0) return; run.plays[key] = (run.plays[key] || 0) + 1; playScript(ex.passage.p.script, run.rate || 0.85); renderPlayer(ex); },
   rate: d => { run.rate = +d.r; renderPlayer(run.items[run.i]); },
   uml: d => { const i = document.getElementById("ans"); const p = i.selectionStart ?? i.value.length; i.value = i.value.slice(0, p) + d.c + i.value.slice(i.selectionEnd ?? p); i.focus(); i.setSelectionRange(p + 1, p + 1); },
-  vtest: () => { const sel = document.getElementById("vsel"); deVoice = deVoices.find(v => v.name === sel.value) || deVoice; S.voiceName = deVoice ? deVoice.name : ""; save(); speak("Ich sehe den Hund."); },
+  vtest: () => { const sel = document.getElementById("vsel"); deVoice = deVoices.find(v => v.name === sel.value) || deVoice; S.voiceName = deVoice ? deVoice.name : ""; save(); stopAudio(); if (deVoice) speechSynthesis.speak(utter("Ich sehe den Hund.", deVoice)); },
   next: () => { run.i++; step(); }
 };
 $app.addEventListener("click", e => {
