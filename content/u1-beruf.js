@@ -35,8 +35,8 @@ window.CONTENT_PART = {
   reading: [
     {
       title: "E-Mail: Neu im Einkauf",
-      text: "Sehr geehrte Frau Brandt,\nich bin Laura Fischer und arbeite im Einkauf bei der Firma Kraft.\nIch komme aus Izmir. Ich wohne in Hamburg.\nIch spreche Türkisch und Deutsch.\nMein Chef ist Herr Lange.\nMeine Telefonnummer ist 040 55 66 77.\nViele Grüße\nElif Fischer",
-      tr: "Sayın Bayan Brandt,\nben Laura Fischer ve Kraft firmasında satın almada çalışıyorum.\nİzmir'denim. Hamburg'da oturuyorum.\nTürkçe ve Almanca konuşuyorum.\nŞefim Bay Lange.\nTelefon numaram 040 55 66 77.\nSelamlar\nElif Fischer",
+      text: "Sehr geehrte Frau Brandt,\nich bin Laura Fischer und arbeite im Einkauf bei der Firma Kraft.\nIch komme aus Izmir. Ich wohne in Hamburg.\nIch spreche Türkisch und Deutsch.\nMein Chef ist Herr Lange.\nMeine Telefonnummer ist 040 55 66 77.\nViele Grüße\nLaura Fischer",
+      tr: "Sayın Bayan Brandt,\nben Laura Fischer ve Kraft firmasında satın almada çalışıyorum.\nİzmir'denim. Hamburg'da oturuyorum.\nTürkçe ve Almanca konuşuyorum.\nŞefim Bay Lange.\nTelefon numaram 040 55 66 77.\nSelamlar\nLaura Fischer",
       biz: true,
       qs: [
         { t: "rf", q: "Laura Fischer arbeitet im Einkauf.", a: "richtig", why: "Metinde: 'ich bin Laura Fischer und arbeite im Einkauf bei der Firma Kraft.'" },

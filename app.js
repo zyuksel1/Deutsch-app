@@ -77,14 +77,24 @@ function loadVoices() {
   deVoice = deVoices.find(v => v.name === S.voiceName) || deVoices[0] || null;
   const el = document.getElementById("voiceState"); if (el) el.innerHTML = voiceStateHtml();
 }
+// v0.11 Ses modu: Basit (yavaş, net, cümleler arası ara; başlangıç varsayılanı) / Doğal (günlük hız)
+const audioMode = () => S.audioMode === "dogal" ? "dogal" : "basit";
+const MODE_NAME = { basit: "Basit (yavaş ve net)", dogal: "Doğal (günlük hız)" };
+const modeToggle = () => `<span class="modesw" role="group" aria-label="Ses modu">${["basit", "dogal"].map(m => `<button class="ghost small ${audioMode() === m ? "on" : ""}" data-a="amode" data-m="${m}">${m === "basit" ? "🐢 Basit" : "🗣️ Doğal"}</button>`).join("")}</span>`;
 function voiceStateHtml() {
-  return `🔊 Ses: <b>kayıtlı Almanca ses</b> (her cihazda aynı, internetsiz çalışır)`;
+  return `🔊 Ses: <b>${MODE_NAME[audioMode()]}</b> · kayıtlı Almanca ses, internetsiz çalışır`;
 }
 // v0.10 Önceden kaydedilmiş ses dosyaları (audio/index.js). Dosyası olmayan metinde cihazın Almanca sesi denenir.
 // iPhone: sessiz mod düğmesi açıkken de ses (Safari 17+); eski sürümlerde etkisiz
 try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
 const AU = new Audio(); AU.preload = "auto"; let auQueue = [], auRate = 1;
-const audioFile = (t, v) => { const m = window.AUDIO && window.AUDIO[v || "a"]; const n = m && m[String(t).trim()]; return n ? "audio/" + n : null; };
+// Seslendirilecek metin: parantez içi ipuçları, ör. "(wohnen)", okunmaz
+const spoken = t => String(t).replace(/\s*\([^)]*\)/g, "").trim();
+const audioFile = (t, v) => {
+  const A = window.AUDIO || {}, key = spoken(t), base = v || "a";
+  const n = (audioMode() === "basit" && A["s" + base] && A["s" + base][key]) || (A[base] && A[base][key]);
+  return n ? "audio/" + n : null;
+};
 function auPlay(src, rate) { AU.src = src; AU.playbackRate = rate || 1; try { AU.preservesPitch = true; } catch (e) {} const p = AU.play(); if (p && p.catch) p.catch(() => {}); }
 AU.addEventListener("ended", () => { const nx = auQueue.shift(); if (nx) auPlay(nx, auRate); });
 const stopAudio = () => { auQueue = []; try { AU.pause(); } catch (e) {} if ("speechSynthesis" in window) speechSynthesis.cancel(); if (window.liedStop) window.liedStop(); };
@@ -93,7 +103,7 @@ function speak(text, auto) {
   const f = audioFile(text);
   if (f) { stopAudio(); return auPlay(f, 1); }
   if (!deVoice) return auto ? null : voiceScreen();
-  stopAudio(); speechSynthesis.speak(utter(text, deVoice));
+  stopAudio(); speechSynthesis.speak(utter(spoken(text), deVoice));
 }
 function playScript(lines, rate) {
   const who = {}; let k = 0;
@@ -102,7 +112,7 @@ function playScript(lines, rate) {
   if (files.every(Boolean)) { auRate = (rate || 0.85) / 0.85; auQueue = files.slice(1); return auPlay(files[0], auRate); }
   if (!deVoice) return voiceScreen();
   const second = deVoices.find(v => v !== deVoice) || deVoice, tv = {}; k = 0;
-  for (const [sp, line] of lines) { if (!(sp in tv)) tv[sp] = k++ % 2 ? second : deVoice; speechSynthesis.speak(utter(line, tv[sp], rate)); }
+  for (const [sp, line] of lines) { if (!(sp in tv)) tv[sp] = k++ % 2 ? second : deVoice; speechSynthesis.speak(utter(spoken(line), tv[sp], rate)); }
 }
 const sayBtn = t => `<button class="sound" data-a="say" data-t="${h(t)}" aria-label="Dinle">🔊</button>`;
 if ("speechSynthesis" in window) { speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); setTimeout(loadVoices, 800); }
@@ -490,7 +500,8 @@ function renderPlayer(ex) {
   const left = playsLeft(ex);
   el.innerHTML = `<button class="primary" data-a="play" ${left <= 0 ? "disabled" : ""}>▶ Dinle${left !== Infinity ? ` (${left} hak)` : ""}</button>
     <button class="ghost" data-a="stop">■ Durdur</button>
-    <span class="speeds">${[0.7, 0.85, 1].map(r => `<button class="ghost ${(run.rate || 0.85) === r ? "on" : ""}" data-a="rate" data-r="${r}">${r === 1 ? "normal" : r + "×"}</button>`).join("")}</span>`;
+    <span class="speeds">${[0.7, 0.85, 1].map(r => `<button class="ghost ${(run.rate || 0.85) === r ? "on" : ""}" data-a="rate" data-r="${r}">${r === 1 ? "normal" : r + "×"}</button>`).join("")}</span>
+    <div class="modeline">Konuşma: ${modeToggle()}</div>`;
 }
 const pasBtn = `<button class="ghost pas" data-a="pas">Pas · bilmiyorum</button>`;
 function renderZone(ex) {
@@ -601,27 +612,32 @@ function home(msg) {
   stopAudio(); run = null;
   if (!S.name) return nameScreen(true);
   const n = S.today.day === dayStr() ? S.today.n : 0, ns = nextStep();
-  $app.innerHTML = `${msg ? `<div class="good">${h(msg)}</div>` : ""}
+  $app.innerHTML = `<div data-screen="home"></div>${msg ? `<div class="good">${h(msg)}</div>` : ""}
     ${S.admin ? `<div class="infobox">🔑 <b>Yönetici modu açık:</b> tüm hazır içerik kilitsiz. İlerleme yine kaydedilir. Kapatmak için sağ üstteki 🔑.</div>` : ""}
     <div class="card"><h2>Hallo, ${h(S.name)}! <button class="ghost small" data-a="name" aria-label="Adını değiştir">✏️</button></h2>
       <div class="muted">Bugünkü hedef: ${Math.min(n, DAILY_GOAL)}/${DAILY_GOAL} cevap</div>
       <div class="progress"><i style="width:${Math.min(100, n / DAILY_GOAL * 100)}%"></i></div>
-      <div class="muted" id="voiceState">${voiceStateHtml()}</div></div>
+      <div class="muted" id="voiceState">${voiceStateHtml()}</div>
+      <div class="tools">
+        <button data-a="level"><span>📊</span>Seviye paneli</button>
+        <button data-a="voice"><span>🔊</span>Ses ayarı</button>
+        <button data-a="backup"><span>💾</span>Yedek</button>
+      </div></div>
     <div class="menu">
       ${ns ? `<button class="big today" data-a="cat" data-u="${ns.u.id}" data-c="${ns.cat}"><b>▶ Bugünkü ders</b><small>${h(ns.label)}</small></button>` : ""}
       <button class="big" data-a="mix"><b>🔀 Karışık tekrar</b><small>Eski + yeni, hatalar önce · ${Object.keys(S.errors).length} tekrar kaydı</small></button>
       <button class="big" data-a="notes"><b>📒 Ders notları</b><small>Unuttuğun konuyu aç: sein, Akkusativ, mein/sein… · ara ve oku</small></button>
       <button class="big" data-a="lieder"><b>🎵 Şarkılarla öğren</b><small>Dinle, sözleri takip et, anlamını çöz · kendi şarkını da ekleyebilirsin</small></button>
     </div>
-    ${LEVELS.map(levelHtml).join("")}
-    <div class="menu" style="margin-top:10px"><button class="big" data-a="level"><b>📊 Seviye paneli</b><small>Beceri bazlı durum ve tekrar listesi</small></button>
-    <button class="big" data-a="voice"><b>🔊 Ses ayarı</b><small>Almanca sesi seç ve dene</small></button>
-    <button class="big" data-a="backup"><b>💾 İlerleme yedeği</b><small>Telefon ↔ bilgisayar arasında ilerlemeni taşı</small></button></div>`;
+    <h3 class="maphead">🗺️ Seviye haritası <small class="muted">başlığa dokun, üniteler açılsın</small></h3>
+    ${LEVELS.map(levelHtml).join("")}`;
+  // Seviye grupları: açık/kapalı durumu cihazda hatırlanır
+  $app.querySelectorAll("details.level").forEach(d => d.addEventListener("toggle", () => { S.openLv = S.openLv || {}; S.openLv[d.dataset.lv] = d.open; save(); }));
 }
 // Kullanıcı adı: ilk açılışta bir kez sorulur, yalnız bu cihazda saklanır, ✏️ ile değişir
 function nameScreen(first) {
   stopAudio(); run = null;
-  $app.innerHTML = `<div class="card"><h2>${first ? "Willkommen! 👋" : "Adını değiştir"}</h2>
+  $app.innerHTML = `${first ? `<div data-screen="home"></div>` : ""}<div class="card"><h2>${first ? "Willkommen! 👋" : "Adını değiştir"}</h2>
     <p>${first ? "Sana nasıl hitap edeyim?" : "Yeni adını yaz."} <span class="muted">Ad yalnız bu cihazda saklanır.</span></p>
     <form id="nameForm" class="typebox"><input id="nameIn" maxlength="30" autocomplete="given-name" placeholder="Adın" value="${h(S.name || "")}">
     <button class="primary" type="submit">Kaydet</button></form>${first ? "" : `<button class="ghost" data-a="home" style="margin-top:10px">Vazgeç</button>`}</div>`;
@@ -631,11 +647,13 @@ function nameScreen(first) {
 function levelHtml(l) {
   const open = levelOpen(l), units = l.units.map(unitById).filter(Boolean);
   const passed = units.filter(u => uState(u.id).passed).length, exam = S.prog.exams[l.id];
-  return `<div class="level ${open ? "" : "locked"}"><div class="levelhead"><h3>${open ? "" : "🔒 "}${h(l.id)} · ${h(l.title)}</h3><span class="muted">${passed}/${l.plannedUnits || units.length} ünite</span></div>
+  const ns = nextStep(), cur = ns && units.includes(ns.u) ? ns.u : null, isOpen = S.openLv && S.openLv[l.id];
+  return `<details class="level ${open ? "" : "locked"}" data-lv="${h(l.id)}" ${isOpen ? "open" : ""}><summary class="levelhead"><h3>${open ? "" : "🔒 "}${h(l.id)} · ${h(l.title)}</h3><span class="muted">${passed}/${l.plannedUnits || units.length} ünite</span>
+    ${cur ? `<small class="lvnext">Sıradaki: Ünite ${cur.no} · ${h(cur.title)}</small>` : ""}</summary>
     ${units.map(unitHtml).join("")}
     ${(l.planned || []).map(t => `<div class="unit locked"><b>🔒 ${h(t)}</b> <small class="muted">içerik hazırlanıyor</small></div>`).join("")}
     <div class="unit locked"><b>🎓 ${h(l.id)} seviye sınavı</b>
-      <small class="muted">${exam && exam.passed ? `Geçildi: %${exam.pct}` : `Goethe formatına yakın · geçme %70 · ${(l.planned || []).length ? "ünitelerin içeriği tamamlanınca hazırlanacak" : "tüm üniteler geçilince açılır"}`}</small></div></div>`;
+      <small class="muted">${exam && exam.passed ? `Geçildi: %${exam.pct}` : `Goethe formatına yakın · geçme %70 · ${(l.planned || []).length ? "ünitelerin içeriği tamamlanınca hazırlanacak" : "tüm üniteler geçilince açılır"}`}</small></div></details>`;
 }
 function unitHtml(u) {
   const open = unitOpen(u), st = uState(u.id), cs = catsOf(u);
@@ -660,7 +678,10 @@ function voiceScreen() {
   const list = deVoices.map(v => `<option ${v === deVoice ? "selected" : ""}>${h(v.name)}</option>`).join("");
   $app.innerHTML = `<div class="card"><h2>Ses ayarı</h2>
     <p>Uygulamadaki tüm Almanca kelime, cümle ve diyaloglar <b>önceden kaydedilmiş ses dosyası</b> olarak gelir: her telefonda ve bilgisayarda aynı ses, internetsiz de çalışır. Cihazın ses ayarı gerekmez.</p>
-    <div class="row"><button class="primary" data-a="say" data-t="Ich sehe den Hund.">🔊 Dene: "Ich sehe den Hund."</button></div>
+    <h3>Konuşma biçimi</h3>
+    <p><b>🐢 Basit:</b> yavaş, kelimeleri yutmadan, cümleler arasında kısa ara. Yeni başlayan için.<br><b>🗣️ Doğal:</b> Almanya'da günlük konuşmaya yakın hız ve akış.</p>
+    <div class="row">${modeToggle()}</div>
+    <div class="row" style="margin-top:10px"><button class="primary" data-a="say" data-t="Ich sehe den Hund.">🔊 Dene: "Ich sehe den Hund."</button></div>
     <h3>Ses gelmiyorsa</h3>
     <ul><li><b>iPhone:</b> ses düğmesiyle medya sesini aç. Şarkı melodisi gelmiyorsa yandaki <b>sessiz mod düğmesini</b> kapat (eski iOS sürümlerinde gerekir).</li>
     <li>İlk kez internet açıkken uygulamayı bir süre açık tut; sesler cihaza iner, sonra internetsiz çalışır.</li></ul>
@@ -678,7 +699,8 @@ function level() {
     return `<div class="skill"><div><span>${name}</span><span>${s.t ? `${p}% · ${lbl(p)} <small class="muted">(${s.c} doğru, ${s.half} yazım hatası, ${s.pas} pas, ${s.t - s.c - s.half - s.pas} yanlış)</small>` : "henüz veri yok"}</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`;
   }).join("");
   const errs = Object.values(S.errors).sort((a, b) => (b.n + (b.pas || 0)) - (a.n + (a.pas || 0)));
-  $app.innerHTML = `<div class="card"><h2>Seviye paneli</h2>${rows}
+  $app.innerHTML = `<div class="card"><h2>Seviye paneli</h2>
+    <div class="kpis"><div><b>🔥 ${S.streak}</b><small>gün seri</small></div><div><b>⭐ ${S.points}</b><small>puan</small></div><div><b>${Math.min(S.today.day === dayStr() ? S.today.n : 0, DAILY_GOAL)}/${DAILY_GOAL}</b><small>bugünkü hedef</small></div></div>${rows}
     <p class="muted">${total < 20 ? `Yeterli veri için en az 20 cevap gerekir (şu an ${total}).` : `Toplam ${total} cevap.`} CEFR seviyesi seviye sınavıyla ölçülür. Son ölçüm (2026-11-17): A1 başı-orta.</p></div>
     <div class="card"><h2>Tekrar listesi</h2>${errs.length ? `<ul class="err">${errs.map(e => `<li>${h(e.label)} <span class="muted">(${h(SKILLS[e.skill] || e.skill)}: ${e.n}× yanlış, ${e.pas || 0}× pas)</span></li>`).join("")}</ul>` : `<p class="muted">Boş.</p>`}</div>
     <button class="ghost" data-a="home">← Geri</button>`;
@@ -700,6 +722,11 @@ const actions = {
   ordersubmit: () => { const ex = run.items[run.i], g = ex.state.built.join(" "); result(ex, g, checkText(g, ex.answers, { caseMatters: false }), false); },
   play: () => { const ex = run.items[run.i], key = ex.passage.list + ex.passage.u + ":" + ex.passage.pi; if (playsLeft(ex) <= 0) return; run.plays[key] = (run.plays[key] || 0) + 1; playScript(ex.passage.p.script, run.rate || 0.85); renderPlayer(ex); },
   rate: d => { run.rate = +d.r; renderPlayer(run.items[run.i]); },
+  amode: (d, b) => {
+    S.audioMode = d.m; save();
+    b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.m === d.m));
+    const vs = document.getElementById("voiceState"); if (vs) vs.innerHTML = voiceStateHtml();
+  },
   uml: d => { const i = document.getElementById("ans"); const p = i.selectionStart ?? i.value.length; i.value = i.value.slice(0, p) + d.c + i.value.slice(i.selectionEnd ?? p); i.focus(); i.setSelectionRange(p + 1, p + 1); },
   vtest: () => { const sel = document.getElementById("vsel"); deVoice = deVoices.find(v => v.name === sel.value) || deVoice; S.voiceName = deVoice ? deVoice.name : ""; save(); stopAudio(); if (deVoice) speechSynthesis.speak(utter("Ich sehe den Hund.", deVoice)); },
   next: () => { run.i++; step(); }
@@ -711,6 +738,25 @@ $app.addEventListener("click", e => {
   actions[b.dataset.a](b.dataset, b);
 });
 document.getElementById("homeBtn").addEventListener("click", () => home());
+// v0.11 Her ekranda üst çubukta "← Geri": ders/test içindeyse dersten çıkar (cevaplar zaten kaydedildi),
+// ekranın kendi geri düğmesi varsa onu kullanır (ör. şarkıdan şarkı listesine), yoksa ana ekrana döner.
+const $back = document.getElementById("backBtn");
+const BACK_RX = /^(←|Geri\b|Vazgeç|Sonra\b|Haritaya dön|Şarkıya dön|Ders notları)/;
+function goBack() {
+  stopAudio();
+  const inRun = run && run.items && run.i < run.items.length;
+  if (inRun) {
+    if (qDone() > 0 && !confirm("Bu dersten çıkılsın mı? Şimdiye kadar verdiğin cevaplar kaydedildi.")) return;
+    if (run.cat === "lied" && run.liedId && actions.lied) return actions.lied({ id: run.liedId });
+    return home();
+  }
+  const own = [...$app.querySelectorAll("button[data-a]")].filter(b => BACK_RX.test(b.textContent.trim().replace(/^[🎵📒]\s*/, "")));
+  if (own.length) return own[0].click();
+  home();
+}
+$back.addEventListener("click", goBack);
+new MutationObserver(() => { $back.hidden = !!$app.querySelector('[data-screen="home"]'); window.scrollTo(0, 0); }).observe($app, { childList: true });
+document.getElementById("statsBtn").addEventListener("click", () => { stopAudio(); level(); });
 if (!DEV) document.getElementById("adminBtn").remove();
 else document.getElementById("adminBtn").addEventListener("click", () => {
   if (!S.admin && !confirm("Yönetici modu: tüm hazır üniteler, kategoriler ve testler kilitsiz açılır. Açılsın mı?")) return;

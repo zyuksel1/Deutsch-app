@@ -1,6 +1,6 @@
 // Çevrimdışı çalışma: uygulama dosyaları ilk açılışta cihaza kaydedilir.
 // Önce cihazdaki kopya açılır (internet gerekmez), arka planda yeni sürüm varsa indirilir; bir sonraki açılışta görünür.
-const CACHE = "deutschapp-v13";
+const CACHE = "deutschapp-v15";
 const FILES = [
   "./", "index.html", "style.css", "manifest.webmanifest",
   "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
@@ -27,7 +27,7 @@ self.addEventListener("activate", e => {
 async function cacheAudio() {
   try {
     const c = await caches.open(CACHE), txt = await (await fetch("audio/index.js", { cache: "no-cache" })).text();
-    const names = [...new Set(txt.match(/[ab][0-9a-f]{10}\.mp3/g) || [])];
+    const names = [...new Set(txt.match(/[abest][0-9a-f]{10}\.mp3/g) || [])];
     for (let i = 0; i < names.length; i += 20) {
       await Promise.all(names.slice(i, i + 20).map(async n => { const u = new URL("audio/" + n, self.registration.scope).href; if (!(await c.match(u))) { try { const r = await fetch(u); if (r.ok) await c.put(u, r); } catch (e) {} } }));
     }

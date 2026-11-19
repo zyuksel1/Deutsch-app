@@ -18,8 +18,8 @@
   }
   U.forEach(u => u.sentences.forEach(s => { if (!s.lemmas && allLemmas[s.de]) s.lemmas = allLemmas[s.de]; }));
   U.forEach(u => u.words.forEach(w => {
-    if (w.de === "Mit freundlichen Grüßen") w.ex = ["Mit freundlichen Grüßen (alt satıra:) Hannah Schmidt", "Saygılarımla, Hannah Schmidt"];
-    if (w.de === "Viele Grüße") w.ex = ["Viele Grüße (alt satıra:) Sophie Richter", "Selamlar, Sophie Richter"];
+    if (w.de === "Mit freundlichen Grüßen") w.ex = ["Mit freundlichen Grüßen\nHannah Schmidt", "Saygılarımla,\nHannah Schmidt (Almancada kapanıştan sonra virgül yok, ad alt satırda)"];
+    if (w.de === "Viele Grüße") w.ex = ["Viele Grüße\nSophie Richter", "Selamlar,\nSophie Richter"];
     if (w.de === "Kunde") w.ex = ["Herr Berg ist ein Kunde.", "Bay Berg bir müşteri."];
   }));
 

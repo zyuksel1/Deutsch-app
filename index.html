@@ -10,31 +10,32 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Deutsch">
 <title>Deutsch-App</title>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 <header>
-  <button id="homeBtn" class="logo" aria-label="Ana ekran">Deutsch-App</button>
+  <div class="hleft"><button id="backBtn" class="backbtn" hidden aria-label="Geri">← Geri</button>
+  <button id="homeBtn" class="logo" aria-label="Ana ekran">Deutsch-App</button></div>
   <div class="stats">
-    <span title="Seri (gün)">🔥 <b id="streak">0</b></span>
-    <span title="Puan">⭐ <b id="points">0</b></span>
+    <button id="statsBtn" class="statsbtn" aria-label="Seri ve puan: seviye panelini aç"><span title="Seri (gün)">🔥 <b id="streak">0</b></span>
+    <span title="Puan">⭐ <b id="points">0</b></span></button>
     <button id="adminBtn" class="adminbtn" aria-label="Yönetici modu">🔑</button>
   </div>
 </header>
 <main id="app"></main>
-<script src="content.js?v=5"></script>
-<script src="units-a1.js?v=5"></script>
-<script src="content/u1-genel.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
-<script src="content/u1-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
-<script src="content/u2-genel.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
-<script src="content/u2-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
-<script src="units.js?v=13"></script>
-<script src="content/lieder.js?v=13"></script>
-<script src="audio/index.js?v=13"></script>
-<script src="app.js?v=13"></script>
-<script src="lieder.js?v=13"></script>
-<script src="notes.js?v=13"></script>
-<script src="backup.js?v=13"></script>
+<script src="content.js?v=14"></script>
+<script src="units-a1.js?v=14"></script>
+<script src="content/u1-genel.js?v=14"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u1-beruf.js?v=14"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u2-genel.js?v=14"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u2-beruf.js?v=14"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="units.js?v=14"></script>
+<script src="content/lieder.js?v=14"></script>
+<script src="audio/index.js?v=14"></script>
+<script src="app.js?v=14"></script>
+<script src="lieder.js?v=14"></script>
+<script src="notes.js?v=14"></script>
+<script src="backup.js?v=14"></script>
 <script>
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
   const hadSW = !!navigator.serviceWorker.controller;
