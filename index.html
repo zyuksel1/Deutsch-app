@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Deutsch">
+<title>Deutsch-App</title>
+<link rel="stylesheet" href="style.css?v=11">
+</head>
+<body>
+<header>
+  <button id="homeBtn" class="logo" aria-label="Ana ekran">Deutsch-App</button>
+  <div class="stats">
+    <span title="Seri (gün)">🔥 <b id="streak">0</b></span>
+    <span title="Puan">⭐ <b id="points">0</b></span>
+    <button id="adminBtn" class="adminbtn" aria-label="Yönetici modu">🔑</button>
+  </div>
+</header>
+<main id="app"></main>
+<script src="content.js?v=5"></script>
+<script src="units-a1.js?v=5"></script>
+<script src="content/u1-genel.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u1-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u2-genel.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="content/u2-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
+<script src="units.js?v=5"></script>
+<script src="content/lieder.js?v=11"></script>
+<script src="app.js?v=11"></script>
+<script src="lieder.js?v=11"></script>
+<script src="notes.js?v=11"></script>
+<script src="backup.js?v=11"></script>
+<script>if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js");</script>
+</body>
+</html>
