@@ -11,6 +11,10 @@
       <div class="row"><button class="primary" data-a="bkdown">⬇ Yedeği indir</button></div>
       <div class="typebox"><label>Yedekten yükle (bu cihazdaki ilerlemenin yerine geçer)<input type="file" id="bkfile" accept=".json,application/json"></label></div>
       <p class="muted">Yedekte puan, seri, kelimeler, ünite ilerlemesi, tekrar listesi, okunan dersler ve kendi şarkılarının sözleri var. Kendi şarkılarının <b>ses dosyaları</b> yedeğe girmez; yeni cihazda şarkıyı açıp ses dosyasını yeniden seçmen yeterli.</p></div>
+      <div class="card"><h2>🗑 İlerlemeyi sıfırla</h2>
+      <p>Bu cihazdaki puan, seri, kelimeler, ünite ilerlemesi ve tekrar listesi silinir; uygulama baştan başlar. Adın, ses ayarın ve kendi şarkıların kalır. Başka cihazlar ve başka kullanıcılar etkilenmez.</p>
+      <p class="muted">Emin değilsen önce yukarıdan yedek indir; istersen sonra geri yüklersin.</p>
+      <button class="ghost" data-a="bkreset">Bu cihazda sıfırla</button></div>
       <button class="ghost" data-a="home">← Geri</button>`;
     document.getElementById("bkfile").addEventListener("change", e => { const f = e.target.files[0]; if (f) load(f); });
   }
@@ -33,4 +37,11 @@
   }
   actions.backup = () => backupScreen();
   actions.bkdown = download;
+  actions.bkreset = () => {
+    if (!confirm("Bu cihazdaki tüm ilerleme silinsin mi?")) return;
+    if (!confirm("Son onay: geri alınamaz (yedeğin yoksa). Sıfırlansın mı?")) return;
+    const keep = { name: S.name, voiceName: S.voiceName, mySongs: S.mySongs };
+    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({ ver: S.ver }, keep))); } catch (e) {}
+    location.reload();
+  };
 })();

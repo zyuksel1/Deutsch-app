@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Deutsch">
 <title>Deutsch-App</title>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <header>
@@ -28,12 +28,24 @@
 <script src="content/u1-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
 <script src="content/u2-genel.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
 <script src="content/u2-beruf.js?v=5"></script><script>(window.CONTENT_PARTS=window.CONTENT_PARTS||[]).push(window.CONTENT_PART)</script>
-<script src="units.js?v=5"></script>
-<script src="content/lieder.js?v=11"></script>
-<script src="app.js?v=11"></script>
-<script src="lieder.js?v=11"></script>
-<script src="notes.js?v=11"></script>
-<script src="backup.js?v=11"></script>
-<script>if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js");</script>
+<script src="units.js?v=12"></script>
+<script src="content/lieder.js?v=12"></script>
+<script src="app.js?v=12"></script>
+<script src="lieder.js?v=12"></script>
+<script src="notes.js?v=12"></script>
+<script src="backup.js?v=12"></script>
+<script>
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  const hadSW = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js");
+  // Yeni sürüm yüklenince haber ver (ilerleme etkilenmez)
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadSW || document.getElementById("updBar")) return;
+    const d = document.createElement("div"); d.id = "updBar"; d.className = "updbar";
+    d.innerHTML = 'Yeni sürüm hazır. <button class="primary small" onclick="location.reload()">Yenile</button>';
+    document.body.appendChild(d);
+  });
+}
+</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 "use strict";
-// Deutsch-App v0.8: çevrimdışı (sw.js, manifest), 💾 ilerleme yedeği (backup.js). v0.7: 📒 ders notları (notes.js). v0.6: karışık Bugünkü ders (bitmemiş tüm kategoriler + eski tekrar), kategoriler paralel açık.
+// Deutsch-App v0.9: yönetici modu yalnız localhost, ilerlemeyi sıfırla, güncelleme bildirimi. v0.8: çevrimdışı (sw.js, manifest), 💾 ilerleme yedeği (backup.js). v0.7: 📒 ders notları (notes.js). v0.6: karışık Bugünkü ders (bitmemiş tüm kategoriler + eski tekrar), kategoriler paralel açık.
 // v0.5: 🎵 şarkılarla öğrenme (lieder.js + content/lieder.js).
 // v0.4: Pas butonu (emin/tahmin yok), yazim hatasina kismi puan, kelime hedefi ve ustalik,
 // metin bazli okuma/dinleme ilerlemesi, testte ayri metinler, ses durdurma, yonetici modu, 💼 is Almancasi.
@@ -26,6 +26,9 @@ function fresh() {
 }
 let S;
 try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { S = fresh(); }
+// Yönetici modu yalnız geliştirme bilgisayarında (localhost); yayındaki sitede hiç yok
+const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
+if (!DEV) S.admin = false;
 if (!S.ver || S.ver < 3) { S.words = {}; S.errors = {}; S.lessons = {}; S.stats = {}; S.prog = { units: {}, exams: {} }; }
 if (S.ver < 4) { // v0.4: kelimede "gördüm" yerine "ustalaştım" (m) kullanılır
   for (const w of Object.values(S.words)) if (w.learned && (w.box || 0) > 0) w.m = true;
@@ -693,7 +696,8 @@ $app.addEventListener("click", e => {
   actions[b.dataset.a](b.dataset, b);
 });
 document.getElementById("homeBtn").addEventListener("click", () => home());
-document.getElementById("adminBtn").addEventListener("click", () => {
+if (!DEV) document.getElementById("adminBtn").remove();
+else document.getElementById("adminBtn").addEventListener("click", () => {
   if (!S.admin && !confirm("Yönetici modu: tüm hazır üniteler, kategoriler ve testler kilitsiz açılır. Açılsın mı?")) return;
   S.admin = !S.admin; save(); home();
 });
