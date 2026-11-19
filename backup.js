@@ -3,7 +3,12 @@
 (function () {
   function backupScreen(msg) {
     stopAudio(); run = null;
+    const store = PERSIST === true ? "✓ <b>Kalıcı depolama açık:</b> tarayıcı yer açmak için ilerlemeni silmez."
+      : PERSIST === false ? "⚠ <b>Tarayıcı kalıcı depolamaya izin vermedi.</b> Yer azalırsa ilerleme silinebilir; düzenli yedek al."
+      : "Bu tarayıcı kalıcı depolama durumunu bildirmiyor; düzenli yedek al.";
+    const ios = IOS && !STANDALONE ? `<p class="muted">📱 iPhone'da uygulamayı Safari'den <b>Paylaş ⬆ → Ana Ekrana Ekle</b> ile ekleyip oradan aç: Safari'de 7 gün açılmayan sitelerin verisi silinebilir, ana ekrandaki uygulamanınki silinmez.</p>` : "";
     $app.innerHTML = `${msg || ""}<div class="card"><h2>💾 İlerleme yedeği</h2>
+      <p class="muted">${store}<br>Son yedek: ${S.lastBackup ? `${S.lastBackup.slice(0, 10)} (${daysAgo(S.lastBackup)} gün önce)` : "henüz yok"}.</p>${ios}
       <p>Her cihaz ilerlemeyi kendi içinde tutar; telefon ve bilgisayar birbirini otomatik görmez. İlerlemeni taşımak için:</p>
       <ol><li>Eski cihazda <b>Yedeği indir</b>'e bas; bir dosya iner.</li>
       <li>Dosyayı yeni cihaza gönder (kendine e-posta, WhatsApp, Drive…).</li>
@@ -36,7 +41,14 @@
     r.readAsText(f);
   }
   actions.backup = () => backupScreen();
-  actions.bkdown = download;
+  actions.bkdown = () => {
+    S.lastBackup = new Date().toISOString(); S.backupSnooze = null; // hatırlatma 7 gün susar
+    download(); save();
+    if ($app.querySelector('[data-screen="home"]')) home("Yedek indirildi. Dosyayı güvenli bir yere gönder (e-posta, Drive…).");
+    else backupScreen(`<div class="good">Yedek indirildi. Dosyayı güvenli bir yere gönder (e-posta, Drive…).</div>`);
+  };
+  actions.bksnooze = () => { S.backupSnooze = new Date(Date.now() + 7 * 86400000).toISOString(); save(); home(); };
+  actions.iostip = () => { S.iosTipOff = true; save(); home(); };
   actions.bkreset = () => {
     if (!confirm("Bu cihazdaki tüm ilerleme silinsin mi?")) return;
     if (!confirm("Son onay: geri alınamaz (yedeğin yoksa). Sıfırlansın mı?")) return;

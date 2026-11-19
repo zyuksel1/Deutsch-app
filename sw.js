@@ -1,11 +1,15 @@
 // Çevrimdışı çalışma: uygulama dosyaları ilk açılışta cihaza kaydedilir.
 // Önce cihazdaki kopya açılır (internet gerekmez), arka planda yeni sürüm varsa indirilir; bir sonraki açılışta görünür.
-const CACHE = "deutschapp-v15";
+const CACHE = "deutschapp-v16";
 const FILES = [
   "./", "index.html", "style.css", "manifest.webmanifest",
   "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
   "app.js",
   "audio/index.js",
+  "fonts/atkinson-latin.woff2",
+  "fonts/atkinson-latin-ext.woff2",
+  "fonts/sourceserif4-latin.woff2",
+  "fonts/sourceserif4-latin-ext.woff2",
   "backup.js",
   "content.js",
   "content/lieder.js",

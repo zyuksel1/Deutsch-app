@@ -39,6 +39,42 @@ S.prog = S.prog || { units: {}, exams: {} }; S.lessons = S.lessons || {}; S.stat
 for (const k of Object.keys(SKILLS)) S.stats[k] = Object.assign({ c: 0, t: 0, half: 0, pas: 0 }, S.stats[k]);
 for (const [k, e] of Object.entries(S.errors)) if (!e.ref) delete S.errors[k];
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} header(); }
+
+// ---------- R7: kalıcı depolama + yedek hatırlatma ----------
+// Tarayıcıdan kalıcı depolama istenir: izin verilirse yer azaldığında ilerleme silinmez.
+// iPhone Safari, ana ekrana eklenmemiş sitelerin verisini 7 gün açılmazsa silebilir; ana ekrandaki uygulama bundan muaf.
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+let PERSIST = null; // true: kalıcı · false: izin verilmedi · null: tarayıcı desteklemiyor
+(async () => {
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      PERSIST = await navigator.storage.persisted();
+      if (!PERSIST) PERSIST = await navigator.storage.persist();
+    }
+  } catch (e) {}
+})();
+const BACKUP_EVERY = 7 * 86400000;
+function hasProgress() { return S.points > 0 || Object.keys(S.words || {}).length > 0; }
+if (!S.firstUse && hasProgress()) S.firstUse = new Date().toISOString();
+function backupDue() {
+  if (!hasProgress()) return false;
+  const now = Date.now();
+  if (S.backupSnooze && Date.parse(S.backupSnooze) > now) return false;
+  const since = Date.parse(S.lastBackup || S.firstUse || new Date().toISOString());
+  return now - since >= BACKUP_EVERY;
+}
+function daysAgo(iso) { return Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 86400000)); }
+function backupNoticeHtml() {
+  let out = "";
+  if (IOS && !STANDALONE && hasProgress() && !S.iosTipOff)
+    out += `<div class="infobox">📱 <b>İlerlemeni korumak için:</b> iPhone'da Safari, ana ekrana eklenmemiş sitelerin verisini 7 gün açılmazsa silebilir. Safari'de <b>Paylaş ⬆ → Ana Ekrana Ekle</b> ile uygulamayı ekle ve oradan aç; ilerlemen güvende kalır.
+      <div class="row"><button class="ghost small" data-a="iostip">Tamam, anladım</button></div></div>`;
+  if (backupDue())
+    out += `<div class="infobox">💾 <b>Yedek zamanı.</b> ${S.lastBackup ? `Son yedeğin ${daysAgo(S.lastBackup)} gün önce.` : "Henüz hiç yedek almadın."} İlerlemen yalnız bu cihazda; telefon değişirse ya da veri silinirse kaybolur.
+      <div class="row"><button class="primary small" data-a="bkdown">⬇ Yedeği indir</button><button class="ghost small" data-a="bksnooze">Sonra hatırlat</button></div></div>`;
+  return out;
+}
 function dayStr(d = new Date()) { const p = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
 function header() {
   document.getElementById("streak").textContent = S.streak; document.getElementById("points").textContent = S.points;
@@ -623,6 +659,7 @@ function home(msg) {
         <button data-a="voice"><span>🔊</span>Ses ayarı</button>
         <button data-a="backup"><span>💾</span>Yedek</button>
       </div></div>
+    ${backupNoticeHtml()}
     <div class="menu">
       ${ns ? `<button class="big today" data-a="cat" data-u="${ns.u.id}" data-c="${ns.cat}"><b>▶ Bugünkü ders</b><small>${h(ns.label)}</small></button>` : ""}
       <button class="big" data-a="mix"><b>🔀 Karışık tekrar</b><small>Eski + yeni, hatalar önce · ${Object.keys(S.errors).length} tekrar kaydı</small></button>
@@ -696,7 +733,12 @@ function level() {
   const total = Object.values(S.stats).reduce((a, s) => a + s.t, 0);
   const rows = Object.entries(SKILLS).map(([k, name]) => {
     const s = S.stats[k], sc = s.c + s.half / 2, p = s.t ? Math.round(sc / s.t * 100) : 0;
-    return `<div class="skill"><div><span>${name}</span><span>${s.t ? `${p}% · ${lbl(p)} <small class="muted">(${s.c} doğru, ${s.half} yazım hatası, ${s.pas} pas, ${s.t - s.c - s.half - s.pas} yanlış)</small>` : "henüz veri yok"}</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`;
+    if (!s.t) return `<div class="skill"><div class="skillhead"><b>${name}</b><span class="muted">henüz veri yok</span></div><div class="bar"></div></div>`;
+    // R38: üstte ad + oran, ortada renk bölümlü tek çubuk (doğru / yazım hatası / pas / yanlış), altında sayılar yazıyla
+    const wrong = s.t - s.c - s.half - s.pas, seg = (n, c) => n > 0 ? `<i class="${c}" style="flex:${n}"></i>` : "";
+    return `<div class="skill"><div class="skillhead"><b>${name}</b><span class="skillpct">%${p} <small>${lbl(p)}</small></span></div>
+      <div class="bar seg" role="img" aria-label="${name}: ${s.c} doğru, ${s.half} yazım hatası, ${s.pas} pas, ${wrong} yanlış">${seg(s.c, "c")}${seg(s.half, "h")}${seg(s.pas, "p")}${seg(wrong, "w")}</div>
+      <div class="counts"><span class="c">${s.c} doğru</span><span class="h">${s.half} yazım hatası</span><span class="p">${s.pas} pas</span><span class="w">${wrong} yanlış</span></div></div>`;
   }).join("");
   const errs = Object.values(S.errors).sort((a, b) => (b.n + (b.pas || 0)) - (a.n + (a.pas || 0)));
   $app.innerHTML = `<div class="card"><h2>Seviye paneli</h2>

@@ -219,8 +219,8 @@ window.UNIT_DRAFTS = [
       },
       {
         title: "Kurznotiz: Neu im Kurs",
-        text: "Hallo! Das ist Stefan. Er ist neu hier.\nMehmet kommt aus der Türkei, aus Izmir. Er ist 31 Jahre alt. Er wohnt jetzt in Berlin, Lindenstraße 12. Er arbeitet in Berlin und lernt Deutsch. Er spricht Türkisch und ein bisschen Englisch.\nTelefon: 030 55 66 77\nWillkommen, Stefan!",
-        tr: "Merhaba! Bu Stefan. O burada yeni.\nMehmet Türkiye'den, İzmir'den geliyor. 31 yaşında. Şimdi Berlin'de, Lindenstraße 12'de oturuyor. Berlin'de çalışıyor ve Almanca öğreniyor. Türkçe ve biraz İngilizce konuşuyor.\nTelefon: 030 55 66 77\nHoş geldin, Stefan!",
+        text: "Hallo! Das ist Stefan. Er ist neu hier.\nStefan kommt aus der Türkei, aus Izmir. Er ist 31 Jahre alt. Er wohnt jetzt in Berlin, Lindenstraße 12. Er arbeitet in Berlin und lernt Deutsch. Er spricht Türkisch und ein bisschen Englisch.\nTelefon: 030 55 66 77\nWillkommen, Stefan!",
+        tr: "Merhaba! Bu Stefan. O burada yeni.\nStefan Türkiye'den, İzmir'den geliyor. 31 yaşında. Şimdi Berlin'de, Lindenstraße 12'de oturuyor. Berlin'de çalışıyor ve Almanca öğreniyor. Türkçe ve biraz İngilizce konuşuyor.\nTelefon: 030 55 66 77\nHoş geldin, Stefan!",
         qs: [
           { t: "mc", q: "Wo wohnt Stefan jetzt?", o: ["in Hamburg", "in Berlin", "in Izmir"], a: "in Berlin", why: "Metinde: 'Er wohnt jetzt in Berlin, Lindenstraße 12.' (Izmir = köken)" },
           { t: "rf", q: "Stefan ist 33 Jahre alt.", a: "falsch", why: "Metinde: 'Er ist 31 Jahre alt.'" },
@@ -295,7 +295,7 @@ window.UNIT_DRAFTS = [
       { de: "Mutter", art: "die", pl: "Mütter", tr: "anne", t: "p", ex: ["Meine Mutter heißt Sabine.", "Annemin adı Sabine."] },
       { de: "Bruder", art: "der", pl: "Brüder", tr: "erkek kardeş, ağabey", t: "p", ex: ["Mein Bruder ist 22 Jahre alt.", "Erkek kardeşim 22 yaşında."], tip: "Almanca 'abi' ile 'kardeş' ayrımı yoktur: Bruder." },
       { de: "Schwester", art: "die", pl: "Schwestern", tr: "kız kardeş, abla", t: "p", ex: ["Ich habe eine Schwester.", "Bir kız kardeşim var."] },
-      { de: "Geschwister", art: "die", pl: null, tr: "kardeşler (kız ve erkek)", t: "p", ex: ["Hast du Geschwister?", "Kardeşin var mı?"], tip: "Yalnız çoğul: Geschwister." },
+      { de: "Geschwister", art: "die", pl: null, tr: "kardeşler (kız ve erkek)", t: "p", ex: ["Hast du Geschwister?", "Kardeşin var mı?"], tip: "Genelde çoğul kullanılır: die Geschwister (kardeşler). Tekili das Geschwister çok nadirdir." },
       { de: "Kind", art: "das", pl: "Kinder", tr: "çocuk", t: "p", ex: ["Sie hat zwei Kinder.", "Onun iki çocuğu var."] },
       { de: "Sohn", art: "der", pl: "Söhne", tr: "oğul", t: "p", ex: ["Ihr Sohn heißt Paul.", "Oğlunun adı Paul."] },
       { de: "Tochter", art: "die", pl: "Töchter", tr: "kız evlat", t: "p", ex: ["Seine Tochter ist drei Jahre alt.", "Kızı üç yaşında."] },

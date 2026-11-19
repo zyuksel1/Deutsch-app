@@ -41,24 +41,35 @@
     }).join("");
     return res || `<p class="muted">"${h(q)}" için not bulunamadı. Bu konu henüz derslere eklenmemiş olabilir (ör. Dativ: der → dem, A1.2'de gelecek).</p>`;
   }
-  function notesScreen() {
+  // R37: bir nota girip geri dönünce liste aynı kaydırma konumunda ve aynı arama kelimesiyle açılır.
+  // Ana ekrandan her giriş temiz başlar. (app.js her ekran değişiminde en başa kaydırır; konumu o işlem bittikten sonra geri veririz.)
+  const NS = { q: "", y: 0, back: false };
+  function notesScreen(restore) {
     stopAudio(); run = null;
+    const keep = restore === true && NS.back; NS.back = false;
+    if (!keep) { NS.q = ""; NS.y = 0; }
     $app.innerHTML = `<div class="card"><h2>📒 Ders notları</h2>
       <p class="muted">Derslerde gördüğün tüm mini dersler burada. "Bu neydi?" dediğin kelimeyi ara: <i>sein, Akkusativ, den, mein, haben</i>…</p>
-      <div class="typebox"><input id="noteq" type="search" placeholder="Ara: ör. sein, Akkusativ, den" autocomplete="off"></div>
-      <div class="menu" id="notelist" style="margin-top:10px">${listHtml("")}</div></div>
+      <div class="typebox"><input id="noteq" type="search" placeholder="Ara: ör. sein, Akkusativ, den" autocomplete="off" value="${h(NS.q)}"></div>
+      <div class="menu" id="notelist" style="margin-top:10px">${listHtml(NS.q)}</div></div>
       <button class="ghost" data-a="home">← Geri</button>`;
     const i = document.getElementById("noteq");
-    i.addEventListener("input", () => { document.getElementById("notelist").innerHTML = listHtml(i.value); });
+    i.addEventListener("input", () => { NS.q = i.value; document.getElementById("notelist").innerHTML = listHtml(i.value); });
+    if (keep && NS.y > 0) setTimeout(() => window.scrollTo(0, NS.y), 0);
   }
   function noteScreen(id) {
-    stopAudio(); const l = lessonById(id); if (!l) return notesScreen();
+    stopAudio(); const l = lessonById(id); if (!l) return notesScreen(false);
     $app.innerHTML = `<div class="card lessonbody"><div class="muted">📒 Ders notu${S.lessons[id] ? ` · ilk okuma: ${h(S.lessons[id])}` : ""}</div><h2>${h(l.title)}</h2>${l.html}
-      <div class="row" style="margin-top:14px"><button class="primary" data-a="notes">← Ders notları</button><button class="ghost" data-a="home">Ana ekran</button></div></div>`;
+      <div class="row" style="margin-top:14px"><button class="primary" data-a="notesback">← Ders notları</button><button class="ghost" data-a="home">Ana ekran</button></div></div>`;
     window.scrollTo(0, 0);
   }
-  actions.notes = notesScreen;
-  actions.note = d => noteScreen(d.id);
+  actions.notes = () => notesScreen(false);
+  actions.notesback = () => notesScreen(true);
+  actions.note = d => {
+    const qi = document.getElementById("noteq"); // listeden mi açıldı?
+    if (qi) { NS.q = qi.value; NS.y = window.scrollY; NS.back = true; } else NS.back = false;
+    noteScreen(d.id);
+  };
   KEEP_AUDIO.add("help");
   window.lessonsFor = lessonsFor;
 })();
